@@ -1,7 +1,7 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request # Importamos 'request' para acceder a los datos de la petición
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
-import uuid # Importamos la librería para generar IDs únicos
+import uuid
 
 # Inicializamos la aplicación Flask
 app = Flask(__name__)
@@ -17,31 +17,24 @@ db = SQLAlchemy(app)
 
 # --- MODELOS DE LA BASE DE DATOS ---
 
-# Modelo para el Quiz
 class Quiz(db.Model):
-    __tablename__ = 'quizzes' # Nombre de la tabla
+    __tablename__ = 'quizzes'
     id = db.Column(db.Integer, primary_key=True)
-    # Usamos un código corto y único para compartir el quiz
     share_code = db.Column(db.String(6), unique=True, nullable=False)
     title = db.Column(db.String(100), nullable=False)
-    # La relación 'questions' nos permitirá acceder a las preguntas del quiz fácilmente
     questions = db.relationship('Question', backref='quiz', lazy=True, cascade="all, delete-orphan")
 
     def __init__(self, title):
         self.title = title
-        # Generamos un código único de 6 caracteres para compartir
         self.share_code = str(uuid.uuid4().hex)[:6]
 
-# Modelo para las Preguntas
 class Question(db.Model):
     __tablename__ = 'questions'
     id = db.Column(db.Integer, primary_key=True)
     question_text = db.Column(db.String(255), nullable=False)
     quiz_id = db.Column(db.Integer, db.ForeignKey('quizzes.id'), nullable=False)
-    # La relación 'options' nos permitirá acceder a las opciones de la pregunta
     options = db.relationship('Option', backref='question', lazy=True, cascade="all, delete-orphan")
 
-# Modelo para las Opciones de respuesta
 class Option(db.Model):
     __tablename__ = 'options'
     id = db.Column(db.Integer, primary_key=True)
@@ -52,12 +45,10 @@ class Option(db.Model):
 
 # --- RUTAS DE LA API ---
 
-# Ruta de prueba original
 @app.route('/api/ping', methods=['GET'])
 def ping_pong():
     return jsonify({"message": "pong!"})
 
-# Ruta para verificar la conexión con la base de datos
 @app.route('/api/db-check', methods=['GET'])
 def db_check():
     try:
@@ -66,9 +57,52 @@ def db_check():
     except Exception as e:
         return jsonify({"message": "Database connection failed!", "error": str(e)}), 500
 
-# Esta parte asegura que el servidor solo se ejecute cuando corremos el script directamente.
+# NUEVA RUTA: Para crear un nuevo quiz
+@app.route('/api/quizzes', methods=['POST'])
+def create_quiz():
+    # Obtenemos los datos JSON enviados en la petición
+    data = request.get_json()
+
+    # Validaciones básicas
+    if not data or not 'title' in data or not 'questions' in data:
+        return jsonify({"error": "Datos de entrada inválidos. Se requiere 'title' y 'questions'."}), 400
+
+    try:
+        # 1. Creamos el objeto Quiz principal
+        new_quiz = Quiz(title=data['title'])
+        db.session.add(new_quiz)
+
+        # 2. Iteramos sobre las preguntas recibidas
+        for q_data in data['questions']:
+            new_question = Question(question_text=q_data['question_text'], quiz=new_quiz)
+            db.session.add(new_question)
+
+            # 3. Iteramos sobre las opciones de cada pregunta
+            for o_data in q_data['options']:
+                new_option = Option(
+                    option_text=o_data['option_text'],
+                    is_correct=o_data['is_correct'],
+                    question=new_question
+                )
+                db.session.add(new_option)
+        
+        # 4. Confirmamos todos los cambios en la base de datos a la vez
+        db.session.commit()
+
+        # Devolvemos una respuesta exitosa con el código para compartir
+        return jsonify({
+            "message": "Quiz creado exitosamente!",
+            "share_code": new_quiz.share_code,
+            "quiz_id": new_quiz.id
+        }), 201
+
+    except Exception as e:
+        # Si algo falla, revertimos todos los cambios para no dejar datos corruptos
+        db.session.rollback()
+        return jsonify({"error": "Falló la creación del quiz", "details": str(e)}), 500
+
+
 if __name__ == '__main__':
-    # Creamos las tablas en la base de datos si no existen
     with app.app_context():
         db.create_all()
     
