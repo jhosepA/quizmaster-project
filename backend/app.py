@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request # Importamos 'request' para acceder a los datos de la petición
+from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 import uuid
@@ -57,27 +57,17 @@ def db_check():
     except Exception as e:
         return jsonify({"message": "Database connection failed!", "error": str(e)}), 500
 
-# NUEVA RUTA: Para crear un nuevo quiz
 @app.route('/api/quizzes', methods=['POST'])
 def create_quiz():
-    # Obtenemos los datos JSON enviados en la petición
     data = request.get_json()
-
-    # Validaciones básicas
     if not data or not 'title' in data or not 'questions' in data:
         return jsonify({"error": "Datos de entrada inválidos. Se requiere 'title' y 'questions'."}), 400
-
     try:
-        # 1. Creamos el objeto Quiz principal
         new_quiz = Quiz(title=data['title'])
         db.session.add(new_quiz)
-
-        # 2. Iteramos sobre las preguntas recibidas
         for q_data in data['questions']:
             new_question = Question(question_text=q_data['question_text'], quiz=new_quiz)
             db.session.add(new_question)
-
-            # 3. Iteramos sobre las opciones de cada pregunta
             for o_data in q_data['options']:
                 new_option = Option(
                     option_text=o_data['option_text'],
@@ -85,21 +75,44 @@ def create_quiz():
                     question=new_question
                 )
                 db.session.add(new_option)
-        
-        # 4. Confirmamos todos los cambios en la base de datos a la vez
         db.session.commit()
-
-        # Devolvemos una respuesta exitosa con el código para compartir
         return jsonify({
             "message": "Quiz creado exitosamente!",
             "share_code": new_quiz.share_code,
             "quiz_id": new_quiz.id
         }), 201
-
     except Exception as e:
-        # Si algo falla, revertimos todos los cambios para no dejar datos corruptos
         db.session.rollback()
         return jsonify({"error": "Falló la creación del quiz", "details": str(e)}), 500
+
+# NUEVA RUTA: Para obtener un quiz por su código para compartir
+@app.route('/api/quizzes/<string:share_code>', methods=['GET'])
+def get_quiz_by_share_code(share_code):
+    # 1. Buscamos el quiz en la base de datos usando el share_code.
+    # .first_or_404() es muy útil: si no encuentra nada, automáticamente devuelve un error 404 (No Encontrado).
+    quiz = Quiz.query.filter_by(share_code=share_code).first_or_404()
+
+    # 2. Convertimos los datos del quiz y sus relaciones a un formato de diccionario (JSON).
+    # IMPORTANTE: No enviamos la respuesta correcta (is_correct) al estudiante.
+    # La lógica de calificación se debe hacer siempre en el backend.
+    quiz_data = {
+        "title": quiz.title,
+        "share_code": quiz.share_code,
+        "questions": [
+            {
+                "id": q.id,
+                "question_text": q.question_text,
+                "options": [
+                    {
+                        "id": o.id,
+                        "option_text": o.option_text
+                    } for o in q.options
+                ]
+            } for q in quiz.questions
+        ]
+    }
+    
+    return jsonify(quiz_data)
 
 
 if __name__ == '__main__':
