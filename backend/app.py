@@ -2,9 +2,16 @@ from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 import uuid
+from flask_cors import CORS # 1. Importar la librería
 
 # Inicializamos la aplicación Flask
 app = Flask(__name__)
+
+# 2. Configurar CORS
+# Esto le dice a nuestra API que acepte peticiones de cualquier ruta que empiece con /api/
+# y que provengan específicamente del origen donde correrá nuestra app de React.
+CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})
+
 
 # --- CONFIGURACIÓN DE LA BASE DE DATOS ---
 db_uri = 'postgresql://quiz_user:123@localhost:5432/quiz_db'
@@ -16,6 +23,8 @@ db = SQLAlchemy(app)
 
 
 # --- MODELOS DE LA BASE DE DATOS ---
+# (El código de los modelos sigue siendo exactamente el mismo, no lo repito aquí por brevedad,
+# pero en tu archivo debe estar presente)
 
 class Quiz(db.Model):
     __tablename__ = 'quizzes'
@@ -44,6 +53,7 @@ class Option(db.Model):
 
 
 # --- RUTAS DE LA API ---
+# (Todas las rutas de la API siguen siendo las mismas)
 
 @app.route('/api/ping', methods=['GET'])
 def ping_pong():
@@ -85,16 +95,9 @@ def create_quiz():
         db.session.rollback()
         return jsonify({"error": "Falló la creación del quiz", "details": str(e)}), 500
 
-# NUEVA RUTA: Para obtener un quiz por su código para compartir
 @app.route('/api/quizzes/<string:share_code>', methods=['GET'])
 def get_quiz_by_share_code(share_code):
-    # 1. Buscamos el quiz en la base de datos usando el share_code.
-    # .first_or_404() es muy útil: si no encuentra nada, automáticamente devuelve un error 404 (No Encontrado).
     quiz = Quiz.query.filter_by(share_code=share_code).first_or_404()
-
-    # 2. Convertimos los datos del quiz y sus relaciones a un formato de diccionario (JSON).
-    # IMPORTANTE: No enviamos la respuesta correcta (is_correct) al estudiante.
-    # La lógica de calificación se debe hacer siempre en el backend.
     quiz_data = {
         "title": quiz.title,
         "share_code": quiz.share_code,
@@ -111,8 +114,48 @@ def get_quiz_by_share_code(share_code):
             } for q in quiz.questions
         ]
     }
-    
     return jsonify(quiz_data)
+
+@app.route('/api/quizzes/<string:share_code>/submit', methods=['POST'])
+def submit_quiz(share_code):
+    data = request.get_json()
+    if not data or 'answers' not in data:
+        return jsonify({"error": "Se requiere un objeto con 'answers'."}), 400
+    
+    quiz = Quiz.query.filter_by(share_code=share_code).first_or_404()
+    
+    correct_answers = {}
+    for question in quiz.questions:
+        for option in question.options:
+            if option.is_correct:
+                correct_answers[question.id] = option.id
+                break
+
+    score = 0
+    results = []
+    user_answers = data['answers']
+
+    for answer in user_answers:
+        question_id = answer.get('question_id')
+        option_id = answer.get('option_id')
+        
+        is_user_correct = False
+        if question_id in correct_answers and correct_answers[question_id] == option_id:
+            score += 1
+            is_user_correct = True
+        
+        results.append({
+            "question_id": question_id,
+            "correct_option_id": correct_answers.get(question_id),
+            "user_option_id": option_id,
+            "is_correct": is_user_correct
+        })
+
+    return jsonify({
+        "score": score,
+        "total_questions": len(quiz.questions),
+        "results": results
+    })
 
 
 if __name__ == '__main__':
