@@ -252,6 +252,18 @@ def generate_quiz_ai():
             "error": "Error al comunicarse con la API de OpenRouter.",
             "details": f"{type(e).__name__}: {str(e)}"
         }), 500
+
+@app.route('/api/quizzes/<string:share_code>', methods=['DELETE'])
+def delete_quiz(share_code):
+    quiz = Quiz.query.filter_by(share_code=share_code).first_or_404()
+    try:
+        db.session.delete(quiz)
+        db.session.commit()
+        return jsonify({"message": "Quiz eliminado exitosamente"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": "No se pudo eliminar el quiz", "details": str(e)}), 500
+        
 # Bloque de ejecución principal
 if __name__ == '__main__':
     with app.app_context():

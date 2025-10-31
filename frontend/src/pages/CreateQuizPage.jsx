@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './CreateQuizPage.css';
 
@@ -15,6 +15,7 @@ function CreateQuizPage() {
   // Estado para la sección de IA
   const [aiTopic, setAiTopic] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Estado general de la página
   const [error, setError] = useState('');
@@ -48,7 +49,7 @@ function CreateQuizPage() {
     }
   };
 
-  // --- Lógica del formulario manual (sin cambios) ---
+  // --- Lógica del formulario manual ---
   const handleQuestionChange = (qIndex, value) => {
     const newQuestions = [...questions];
     newQuestions[qIndex].question_text = value;
@@ -75,10 +76,13 @@ function CreateQuizPage() {
     newQuestions[qIndex].options.push({ option_text: '', is_correct: false });
     setQuestions(newQuestions);
   };
+  
+  // --- Lógica de envío final ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSuccessMessage('');
+    setIsSaving(true);
     const payload = {
       title,
       questions: questions.map(q => ({
@@ -95,14 +99,16 @@ function CreateQuizPage() {
     } catch (err) {
       console.error("Error al crear el quiz:", err);
       setError("No se pudo guardar el quiz. Revisa todos los campos.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
   return (
     <div className="create-quiz-container">
-      <h2>Crear Nuevo Quiz</h2>
-
-      {/* --- SECCIÓN DE GENERACIÓN CON IA --- */}
+      <Link to="/professor/dashboard" className="btn-back">← Volver al Panel</Link>
+      
+      {/* Tarjeta de generación con IA */}
       <div className="ai-generator-section">
         <h3>Generar con IA</h3>
         <div className="form-group-inline">
@@ -110,7 +116,7 @@ function CreateQuizPage() {
             type="text"
             value={aiTopic}
             onChange={(e) => setAiTopic(e.target.value)}
-            placeholder="Introduce un tema (ej: 'La Segunda Guerra Mundial')"
+            placeholder="Introduce un tema (ej: 'El sistema solar')"
             disabled={isGenerating}
           />
           <button type="button" onClick={handleGenerateWithAI} disabled={isGenerating} className="btn-primary">
@@ -119,65 +125,71 @@ function CreateQuizPage() {
         </div>
       </div>
 
-      <hr />
-
-      {/* --- SECCIÓN DE CREACIÓN MANUAL --- */}
-      <h3>Editor de Quiz</h3>
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label>Título del Quiz</label>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="El título se rellenará automáticamente"
-            required
-          />
-        </div>
-        {questions.map((q, qIndex) => (
-          <div key={qIndex} className="question-editor">
-            <h4>Pregunta {qIndex + 1}</h4>
+      {/* Tarjeta de edición manual */}
+      <div className="manual-editor-section">
+        <h2>Editor de Quiz</h2>
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label>Título del Quiz</label>
             <input
               type="text"
-              value={q.question_text}
-              onChange={(e) => handleQuestionChange(qIndex, e.target.value)}
-              placeholder={`Texto de la pregunta ${qIndex + 1}`}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="El título se rellenará con la IA o puedes escribir uno"
               required
             />
-            <h5>Opciones</h5>
-            {q.options.map((opt, oIndex) => (
-              <div key={oIndex} className="option-editor">
-                <input
-                  type="radio"
-                  name={`correct_option_${qIndex}`}
-                  checked={opt.is_correct}
-                  onChange={() => handleCorrectOptionChange(qIndex, oIndex)}
-                  required
-                />
+          </div>
+
+          {questions.map((q, qIndex) => (
+            <div key={qIndex} className="question-editor">
+              <h4>Pregunta {qIndex + 1}</h4>
+              <div className='form-group'>
                 <input
                   type="text"
-                  value={opt.option_text}
-                  onChange={(e) => handleOptionChange(qIndex, oIndex, e.target.value)}
-                  placeholder={`Texto de la opción ${oIndex + 1}`}
+                  value={q.question_text}
+                  onChange={(e) => handleQuestionChange(qIndex, e.target.value)}
+                  placeholder={`Texto de la pregunta ${qIndex + 1}`}
                   required
                 />
               </div>
-            ))}
-            <button type="button" onClick={() => addOption(qIndex)} className="btn-secondary">
-              Añadir Opción
+              <h5>Opciones (marca la correcta)</h5>
+              {q.options.map((opt, oIndex) => (
+                <div key={oIndex} className="option-editor">
+                  <input
+                    type="radio"
+                    name={`correct_option_${qIndex}`}
+                    checked={opt.is_correct}
+                    onChange={() => handleCorrectOptionChange(qIndex, oIndex)}
+                    required
+                  />
+                  <input
+                    type="text"
+                    value={opt.option_text}
+                    onChange={(e) => handleOptionChange(qIndex, oIndex, e.target.value)}
+                    placeholder={`Texto de la opción ${oIndex + 1}`}
+                    required
+                  />
+                </div>
+              ))}
+              <button type="button" onClick={() => addOption(qIndex)} className="btn-secondary">
+                Añadir Opción
+              </button>
+            </div>
+          ))}
+          
+          <div className="actions-row">
+            <button type="button" onClick={addQuestion} className="btn-secondary">
+              Añadir Pregunta
+            </button>
+            <button type="submit" className="btn-primary btn-save" disabled={isSaving}>
+              {isSaving ? 'Guardando...' : 'Guardar Quiz'}
             </button>
           </div>
-        ))}
-        <button type="button" onClick={addQuestion} className="btn-secondary">
-          Añadir Pregunta
-        </button>
-        <hr />
-        <button type="submit" className="btn-primary btn-save">
-          Guardar Quiz
-        </button>
-        {error && <p className="error-message">{error}</p>}
-        {successMessage && <p className="success-message">{successMessage}</p>}
-      </form>
+          
+          {error && <p className="error-message">{error}</p>}
+          {successMessage && <p className="success-message">{successMessage}</p>}
+        </form>
+      </div>
     </div>
   );
 }

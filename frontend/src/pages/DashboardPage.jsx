@@ -10,6 +10,18 @@ function DashboardPage() {
   const [error, setError] = useState(null);
   const [activeQrCode, setActiveQrCode] = useState(null); 
 
+  const handleDelete = async (shareCode) => {
+    if (window.confirm('¿Estás seguro de que quieres eliminar este quiz? Esta acción es irreversible.')) {
+      try {
+        await axios.delete(`http://localhost:5000/api/quizzes/${shareCode}`);
+        // Actualizamos la lista de quizzes para que el eliminado desaparezca
+        setQuizzes(quizzes.filter(q => q.share_code !== shareCode));
+      } catch (err) {
+        alert('No se pudo eliminar el quiz.');
+      }
+    }
+  };
+
   useEffect(() => {
     const fetchQuizzes = async () => {
       try {
@@ -32,6 +44,7 @@ function DashboardPage() {
   return (
     <div className="dashboard-container">
       <div className="dashboard-header">
+        <Link to="/" className="btn-back">← Volver al Inicio</Link>
         <h2>Mis Quizzes</h2>
         <Link to="/professor/create" className="btn-create">Crear Nuevo Quiz</Link>
       </div>
@@ -52,6 +65,9 @@ function DashboardPage() {
                 <Link to={`/quiz/${quiz.share_code}/ranking`} className="btn-table">Ranking</Link>
                 <button onClick={() => setActiveQrCode(activeQrCode === quiz.share_code ? null : quiz.share_code)} className="btn-table qr">
                   {activeQrCode === quiz.share_code ? 'Ocultar QR' : 'Mostrar QR'}
+                </button>
+                <button onClick={() => handleDelete(quiz.share_code)} className="btn-table delete">
+                  Eliminar
                 </button>
               </td>
             </tr>

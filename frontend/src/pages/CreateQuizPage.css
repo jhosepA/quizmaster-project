@@ -1,121 +1,160 @@
+/* --- Contenedor Principal y Tarjetas --- */
 .create-quiz-container {
   max-width: 800px;
   margin: 2rem auto;
-  padding: 2rem;
+}
+
+.btn-back {
+  display: inline-block;
+  margin-bottom: 1.5rem;
+  text-decoration: none;
+  color: #555;
+  font-weight: bold;
+  transition: color 0.2s;
+}
+.btn-back:hover {
+  color: #007bff;
+}
+
+.ai-generator-section,
+.manual-editor-section {
   background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  margin-bottom: 2rem;
 }
 
-.create-quiz-container h2 {
+.ai-generator-section h3,
+.manual-editor-section h2 {
   text-align: center;
+  margin-top: 0;
   margin-bottom: 2rem;
+  color: #212529;
 }
 
-.ai-generator-section {
-  background-color: #f8f9fa;
-  border: 1px solid #dee2e6;
-  padding: 1.5rem;
+/* --- Estilos de Inputs Genéricos --- */
+input[type="text"] {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #ced4da;
   border-radius: 6px;
-  margin-bottom: 2rem;
-}
-
-.form-group-inline {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.form-group-inline input {
-  flex-grow: 1;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
   font-size: 1rem;
+  box-sizing: border-box; /* Asegura que el padding no afecte el ancho total */
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+input[type="text"]:focus {
+  outline: none;
+  border-color: #80bdff;
+  box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.2);
 }
 
-.form-group {
+/* --- Grupos de Formularios --- */
+.form-group, .form-group-inline {
   margin-bottom: 1.5rem;
 }
 
 .form-group label {
   display: block;
-  font-weight: bold;
+  font-weight: 600;
   margin-bottom: 0.5rem;
+  color: #495057;
 }
 
-.form-group input {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 1rem;
+.form-group-inline {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.form-group-inline input {
+  flex-grow: 1;
 }
 
+/* --- Editor de Preguntas y Opciones (LA PARTE CLAVE) --- */
 .question-editor {
-  border: 1px solid #eee;
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
-  border-radius: 6px;
+  border-radius: 8px;
+}
+.question-editor h4, .question-editor h5 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #343a40;
 }
 
 .option-editor {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 12px;
+  margin-bottom: 12px;
 }
-
 .option-editor input[type="radio"] {
-  width: auto;
+  flex-shrink: 0;
+  width: 1.3em;
+  height: 1.3em;
+  accent-color: #007bff; /* Cambia el color del check del radio button */
+}
+.option-editor input[type="text"] {
+  flex-grow: 1;
 }
 
-hr {
-  margin: 2rem 0;
-  border: 0;
-  border-top: 1px solid #eee;
+/* --- Botones --- */
+.actions-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e9ecef;
 }
 
 .btn-primary, .btn-secondary {
   display: inline-block;
-  padding: 10px 20px;
+  padding: 12px 24px;
   border: none;
-  border-radius: 5px;
+  border-radius: 6px;
   font-size: 1rem;
   font-weight: bold;
   cursor: pointer;
   text-align: center;
-  margin-right: 10px;
+  transition: background-color 0.2s, transform 0.1s;
+}
+.btn-primary:hover, .btn-secondary:hover {
+  transform: translateY(-2px);
+}
+.btn-primary:disabled, .btn-secondary:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+  transform: none;
 }
 
 .btn-primary {
   background-color: #007bff;
   color: white;
-  width: 100%;
 }
-
 .btn-secondary {
   background-color: #6c757d;
   color: white;
-  margin-top: 10px;
+}
+.btn-save {
+  background-color: #28a745;
 }
 
+/* --- Mensajes --- */
 .error-message, .success-message {
   text-align: center;
-  margin-top: 1rem;
-  padding: 10px;
+  margin-top: 1.5rem;
+  padding: 12px;
   border-radius: 5px;
+  font-weight: 500;
 }
-
 .error-message {
   color: #721c24;
   background-color: #f8d7da;
 }
-
 .success-message {
   color: #155724;
   background-color: #d4edda;
-}
-.btn-save {
-  background-color: #28a745;
 }

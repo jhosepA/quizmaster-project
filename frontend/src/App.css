@@ -12,3 +12,28 @@
 main {
   padding: 0 1rem;
 }
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+.home-link-header {
+  text-decoration: none;
+  color: white;
+}
+.professor-link-header {
+  text-decoration: none;
+  color: white;
+  padding: 8px 16px;
+  border: 1px solid white;
+  border-radius: 5px;
+  transition: background-color 0.2s, color 0.2s;
+}
+.professor-link-header:hover {
+  background-color: white;
+  color: #282c34;
+}

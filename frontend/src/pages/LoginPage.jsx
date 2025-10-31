@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom'; // <--- LA LÍNEA CORREGIDA
 import { useAuth } from '../context/AuthContext';
 import './LoginPage.css';
 
@@ -9,14 +9,13 @@ function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  // La contraseña secreta, "quemada" en el código
   const PROFESSOR_PASSWORD = 'profe'; 
 
   const handleLogin = (e) => {
     e.preventDefault();
     if (password === PROFESSOR_PASSWORD) {
-      login(); // Marcamos como autenticado
-      navigate('/professor/dashboard'); // Redirigimos al panel
+      login();
+      navigate('/professor/dashboard');
     } else {
       setError('Contraseña incorrecta');
     }
@@ -33,6 +32,7 @@ function LoginPage() {
           placeholder="Contraseña"
           required
         />
+        <Link to="/" className="back-link">Volver al Inicio</Link>
         <button type="submit">Entrar</button>
         {error && <p className="error-message">{error}</p>}
       </form>
