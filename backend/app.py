@@ -4,6 +4,10 @@ from sqlalchemy import text
 import uuid
 from flask_cors import CORS
 import datetime
+import os
+import json
+from dotenv import load_dotenv
+import openai
 
 # Inicialización y Configuración
 app = Flask(__name__)
@@ -13,6 +17,13 @@ db_uri = 'postgresql://quiz_user:123@localhost:5432/quiz_db'
 app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+
+# --- Configuración de OpenRouter ---
+load_dotenv()
+client = openai.OpenAI(
+  base_url="https://openrouter.ai/api/v1",
+  api_key=os.getenv("OPENROUTER_API_KEY"),
+)
 
 # --- Modelos de la Base de Datos ---
 
@@ -184,6 +195,63 @@ def get_quiz_ranking(share_code):
     ]
     return jsonify(ranking_list)
 
+# --- RUTA PARA GENERAR QUIZ CON IA (Versión OpenRouter) ---
+@app.route('/api/generate-quiz-ai', methods=['POST'])
+def generate_quiz_ai():
+    data = request.get_json()
+    if not data or 'topic' not in data:
+        return jsonify({"error": "Se requiere un 'topic'."}), 400
+
+    topic = data.get('topic')
+    num_questions = data.get('num_questions', 5)
+
+    system_prompt = """
+    Eres un asistente diseñado para crear quizzes en formato JSON.
+    Tu respuesta DEBE ser únicamente un objeto JSON válido, sin ningún texto, explicación o markdown antes o después.
+    La estructura JSON es:
+    {
+      "title": "Quiz sobre [tema]",
+      "questions": [
+        {
+          "question_text": "Texto de la pregunta",
+          "options": [
+            {"option_text": "Texto de opción", "is_correct": boolean},
+            ...
+          ]
+        }
+      ]
+    }
+    Cada pregunta debe tener 4 opciones y solo una "is_correct" debe ser true.
+    """
+    user_prompt = f"Genera un quiz de {num_questions} preguntas sobre el tema: {topic}."
+
+    try:
+        print(f"DEBUG: Enviando prompt a OpenRouter para el tema: {topic}")
+        completion = client.chat.completions.create(
+            # El nombre del modelo incluye el proveedor. Usaremos Claude Haiku, que es rápido y potente.
+            model="anthropic/claude-3-haiku", 
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            response_format={ "type": "json_object" }
+        )
+        
+        quiz_json_string = completion.choices[0].message.content
+        print(f"DEBUG: Respuesta JSON recibida de OpenRouter:\n{quiz_json_string}")
+        
+        quiz_data = json.loads(quiz_json_string)
+        return jsonify(quiz_data)
+
+    except Exception as e:
+        print("--- INICIO DE ERROR DETALLADO DE LA API (OpenRouter) ---")
+        print(f"Tipo de error: {type(e).__name__}")
+        print(f"Mensaje de error: {e}")
+        print("--- FIN DE ERROR DETALLADO DE LA API (OpenRouter) ---")
+        return jsonify({
+            "error": "Error al comunicarse con la API de OpenRouter.",
+            "details": f"{type(e).__name__}: {str(e)}"
+        }), 500
 # Bloque de ejecución principal
 if __name__ == '__main__':
     with app.app_context():

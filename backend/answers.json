@@ -1,7 +1,4 @@
 {
-    "player_name": "Jhosep",
-    "answers": [
-        { "question_id": 1, "option_id": 3 },
-        { "question_id": 2, "option_id": 5 }
-    ]
+    "topic": "como sera marte mañana",
+    "num_questions": 3
 }
