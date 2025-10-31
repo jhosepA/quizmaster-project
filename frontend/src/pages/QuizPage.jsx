@@ -45,7 +45,7 @@ function QuizPage() {
       { answers: answersPayload }
     )
     .then(response => {
-      navigate('/results', { state: { results: response.data } });
+      navigate('/results', { state: { results: response.data, shareCode: shareCode } });
     })
     .catch(err => {
       console.error("Error detallado al enviar el quiz:", err);

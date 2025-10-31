@@ -1,0 +1,44 @@
+.ranking-container {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.ranking-table {
+  width: 100%;
+  margin: 2rem 0;
+  border-collapse: collapse;
+}
+
+.ranking-table th,
+.ranking-table td {
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+}
+
+.ranking-table thead tr {
+  background-color: #f2f2f2;
+}
+
+.ranking-table tbody tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+.ranking-table td:first-child {
+  font-weight: bold;
+}
+
+.home-link {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 10px 20px;
+    font-size: 1rem;
+    color: white;
+    background-color: #007bff;
+    border-radius: 5px;
+    text-decoration: none;
+}
