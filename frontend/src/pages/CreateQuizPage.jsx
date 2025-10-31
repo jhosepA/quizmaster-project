@@ -5,58 +5,80 @@ import './CreateQuizPage.css';
 
 function CreateQuizPage() {
   const navigate = useNavigate();
+  
+  // Estado para el formulario manual
   const [title, setTitle] = useState('');
   const [questions, setQuestions] = useState([
-    { question_text: '', options: [{ option_text: '', is_correct: false }, { option_text: '', is_correct: false }], correct_option_index: null },
+    { question_text: '', options: [{ option_text: '', is_correct: false }, { option_text: '', is_correct: false }] },
   ]);
+  
+  // Estado para la sección de IA
+  const [aiTopic, setAiTopic] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  // Estado general de la página
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  // --- Manejadores de cambios ---
+  // --- LÓGICA DE GENERACIÓN CON IA ---
+  const handleGenerateWithAI = async () => {
+    if (!aiTopic.trim()) {
+      setError("Por favor, introduce un tema para la IA.");
+      return;
+    }
+    setError('');
+    setIsGenerating(true);
 
+    try {
+      const response = await axios.post('http://localhost:5000/api/generate-quiz-ai', {
+        topic: aiTopic,
+        num_questions: 5 // Puedes hacerlo configurable si quieres
+      });
+
+      // Rellenamos el formulario manual con los datos de la IA
+      const aiQuiz = response.data;
+      setTitle(aiQuiz.title);
+      setQuestions(aiQuiz.questions);
+
+    } catch (err) {
+      console.error("Error al generar con IA:", err);
+      setError("No se pudo generar el quiz con la IA. Inténtalo de nuevo.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // --- Lógica del formulario manual (sin cambios) ---
   const handleQuestionChange = (qIndex, value) => {
     const newQuestions = [...questions];
     newQuestions[qIndex].question_text = value;
     setQuestions(newQuestions);
   };
-
   const handleOptionChange = (qIndex, oIndex, value) => {
     const newQuestions = [...questions];
     newQuestions[qIndex].options[oIndex].option_text = value;
     setQuestions(newQuestions);
   };
-
   const handleCorrectOptionChange = (qIndex, oIndex) => {
     const newQuestions = [...questions];
-    // Desmarcar la opción correcta anterior si la había
     newQuestions[qIndex].options.forEach((opt, index) => {
       newQuestions[qIndex].options[index].is_correct = false;
     });
-    // Marcar la nueva opción correcta
     newQuestions[qIndex].options[oIndex].is_correct = true;
     setQuestions(newQuestions);
   };
-
-  // --- Manejadores de acciones (Añadir/Eliminar) ---
-
   const addQuestion = () => {
-    setQuestions([...questions, { question_text: '', options: [{ option_text: '', is_correct: false }, { option_text: '', is_correct: false }], correct_option_index: null }]);
+    setQuestions([...questions, { question_text: '', options: [{ option_text: '', is_correct: false }, { option_text: '', is_correct: false }] }]);
   };
-
   const addOption = (qIndex) => {
     const newQuestions = [...questions];
     newQuestions[qIndex].options.push({ option_text: '', is_correct: false });
     setQuestions(newQuestions);
   };
-
-  // --- Lógica de envío ---
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSuccessMessage('');
-
-    // Formatear el payload para la API
     const payload = {
       title,
       questions: questions.map(q => ({
@@ -67,21 +89,40 @@ function CreateQuizPage() {
         }))
       }))
     };
-
     try {
       const response = await axios.post('http://localhost:5000/api/quizzes', payload);
-      setSuccessMessage(`¡Quiz creado! Código para compartir: ${response.data.share_code}`);
-      // Opcional: redirigir después de un tiempo
-      // setTimeout(() => navigate('/professor/dashboard'), 2000);
+      setSuccessMessage(`¡Quiz guardado! Código para compartir: ${response.data.share_code}`);
     } catch (err) {
       console.error("Error al crear el quiz:", err);
-      setError("No se pudo crear el quiz. Revisa todos los campos.");
+      setError("No se pudo guardar el quiz. Revisa todos los campos.");
     }
   };
 
   return (
     <div className="create-quiz-container">
       <h2>Crear Nuevo Quiz</h2>
+
+      {/* --- SECCIÓN DE GENERACIÓN CON IA --- */}
+      <div className="ai-generator-section">
+        <h3>Generar con IA</h3>
+        <div className="form-group-inline">
+          <input
+            type="text"
+            value={aiTopic}
+            onChange={(e) => setAiTopic(e.target.value)}
+            placeholder="Introduce un tema (ej: 'La Segunda Guerra Mundial')"
+            disabled={isGenerating}
+          />
+          <button type="button" onClick={handleGenerateWithAI} disabled={isGenerating} className="btn-primary">
+            {isGenerating ? 'Generando...' : 'Generar Quiz'}
+          </button>
+        </div>
+      </div>
+
+      <hr />
+
+      {/* --- SECCIÓN DE CREACIÓN MANUAL --- */}
+      <h3>Editor de Quiz</h3>
       <form onSubmit={handleSubmit}>
         <div className="form-group">
           <label>Título del Quiz</label>
@@ -89,11 +130,10 @@ function CreateQuizPage() {
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Ej: Historia Universal"
+            placeholder="El título se rellenará automáticamente"
             required
           />
         </div>
-
         {questions.map((q, qIndex) => (
           <div key={qIndex} className="question-editor">
             <h4>Pregunta {qIndex + 1}</h4>
@@ -128,15 +168,13 @@ function CreateQuizPage() {
             </button>
           </div>
         ))}
-
         <button type="button" onClick={addQuestion} className="btn-secondary">
           Añadir Pregunta
         </button>
         <hr />
-        <button type="submit" className="btn-primary">
-          Crear Quiz
+        <button type="submit" className="btn-primary btn-save">
+          Guardar Quiz
         </button>
-
         {error && <p className="error-message">{error}</p>}
         {successMessage && <p className="success-message">{successMessage}</p>}
       </form>

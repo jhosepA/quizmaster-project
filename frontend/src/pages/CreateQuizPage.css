@@ -12,6 +12,28 @@
   margin-bottom: 2rem;
 }
 
+.ai-generator-section {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  padding: 1.5rem;
+  border-radius: 6px;
+  margin-bottom: 2rem;
+}
+
+.form-group-inline {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.form-group-inline input {
+  flex-grow: 1;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
 .form-group {
   margin-bottom: 1.5rem;
 }
@@ -93,4 +115,7 @@ hr {
 .success-message {
   color: #155724;
   background-color: #d4edda;
+}
+.btn-save {
+  background-color: #28a745;
 }
