@@ -2,29 +2,19 @@ from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 import uuid
-from flask_cors import CORS # 1. Importar la librería
+from flask_cors import CORS
+import datetime
 
-# Inicializamos la aplicación Flask
+# Inicialización y Configuración
 app = Flask(__name__)
+CORS(app, resources={r"/api/*": {"origins": "http://localhost:5173"}})
 
-# 2. Configurar CORS
-# Esto le dice a nuestra API que acepte peticiones de cualquier ruta que empiece con /api/
-# y que provengan específicamente del origen donde correrá nuestra app de React.
-CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})
-
-
-# --- CONFIGURACIÓN DE LA BASE DE DATOS ---
 db_uri = 'postgresql://quiz_user:123@localhost:5432/quiz_db'
 app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-# Inicializamos SQLAlchemy con nuestra aplicación Flask
 db = SQLAlchemy(app)
 
-
-# --- MODELOS DE LA BASE DE DATOS ---
-# (El código de los modelos sigue siendo exactamente el mismo, no lo repito aquí por brevedad,
-# pero en tu archivo debe estar presente)
+# --- Modelos de la Base de Datos ---
 
 class Quiz(db.Model):
     __tablename__ = 'quizzes'
@@ -32,6 +22,7 @@ class Quiz(db.Model):
     share_code = db.Column(db.String(6), unique=True, nullable=False)
     title = db.Column(db.String(100), nullable=False)
     questions = db.relationship('Question', backref='quiz', lazy=True, cascade="all, delete-orphan")
+    scores = db.relationship('Score', backref='quiz', lazy=True, cascade="all, delete-orphan")
 
     def __init__(self, title):
         self.title = title
@@ -51,9 +42,16 @@ class Option(db.Model):
     is_correct = db.Column(db.Boolean, default=False, nullable=False)
     question_id = db.Column(db.Integer, db.ForeignKey('questions.id'), nullable=False)
 
+class Score(db.Model):
+    __tablename__ = 'scores'
+    id = db.Column(db.Integer, primary_key=True)
+    player_name = db.Column(db.String(50), nullable=False, default='Anónimo') 
+    score = db.Column(db.Integer, nullable=False)
+    total_questions = db.Column(db.Integer, nullable=False)
+    submitted_at = db.Column(db.DateTime, nullable=False, default=datetime.datetime.utcnow)
+    quiz_id = db.Column(db.Integer, db.ForeignKey('quizzes.id'), nullable=False)
 
-# --- RUTAS DE LA API ---
-# (Todas las rutas de la API siguen siendo las mismas)
+# --- Rutas de la API (Endpoints) ---
 
 @app.route('/api/ping', methods=['GET'])
 def ping_pong():
@@ -67,6 +65,22 @@ def db_check():
     except Exception as e:
         return jsonify({"message": "Database connection failed!", "error": str(e)}), 500
 
+# Endpoint para obtener TODOS los quizzes (para el dashboard del profesor)
+@app.route('/api/quizzes', methods=['GET'])
+def get_all_quizzes():
+    quizzes = Quiz.query.order_by(Quiz.id.desc()).all()
+    quizzes_list = [
+        {
+            'id': quiz.id,
+            'title': quiz.title,
+            'share_code': quiz.share_code,
+            'question_count': len(quiz.questions)
+        }
+        for quiz in quizzes
+    ]
+    return jsonify(quizzes_list)
+
+# Endpoint para CREAR un nuevo quiz
 @app.route('/api/quizzes', methods=['POST'])
 def create_quiz():
     data = request.get_json()
@@ -95,6 +109,7 @@ def create_quiz():
         db.session.rollback()
         return jsonify({"error": "Falló la creación del quiz", "details": str(e)}), 500
 
+# Endpoint para OBTENER un quiz específico para jugar
 @app.route('/api/quizzes/<string:share_code>', methods=['GET'])
 def get_quiz_by_share_code(share_code):
     quiz = Quiz.query.filter_by(share_code=share_code).first_or_404()
@@ -106,16 +121,14 @@ def get_quiz_by_share_code(share_code):
                 "id": q.id,
                 "question_text": q.question_text,
                 "options": [
-                    {
-                        "id": o.id,
-                        "option_text": o.option_text
-                    } for o in q.options
+                    { "id": o.id, "option_text": o.option_text } for o in q.options
                 ]
             } for q in quiz.questions
         ]
     }
     return jsonify(quiz_data)
 
+# Endpoint para ENVIAR respuestas y calificar
 @app.route('/api/quizzes/<string:share_code>/submit', methods=['POST'])
 def submit_quiz(share_code):
     data = request.get_json()
@@ -124,42 +137,55 @@ def submit_quiz(share_code):
     
     quiz = Quiz.query.filter_by(share_code=share_code).first_or_404()
     
-    correct_answers = {}
-    for question in quiz.questions:
-        for option in question.options:
-            if option.is_correct:
-                correct_answers[question.id] = option.id
-                break
-
-    score = 0
-    results = []
+    correct_answers = {q.id: next(o.id for o in q.options if o.is_correct) for q in quiz.questions}
+    
+    score_count = 0
     user_answers = data['answers']
-
     for answer in user_answers:
         question_id = answer.get('question_id')
         option_id = answer.get('option_id')
-        
-        is_user_correct = False
         if question_id in correct_answers and correct_answers[question_id] == option_id:
-            score += 1
-            is_user_correct = True
+            score_count += 1
+    
+    player_name = data.get('player_name', 'Anónimo').strip()
+    if not player_name:
+        player_name = 'Anónimo'
         
-        results.append({
-            "question_id": question_id,
-            "correct_option_id": correct_answers.get(question_id),
-            "user_option_id": option_id,
-            "is_correct": is_user_correct
-        })
+    new_score = Score(player_name=player_name, score=score_count, total_questions=len(quiz.questions), quiz_id=quiz.id)
+    db.session.add(new_score)
+    db.session.commit()
 
-    return jsonify({
-        "score": score,
-        "total_questions": len(quiz.questions),
-        "results": results
-    })
+    results = [
+        {
+            "question_id": answer.get('question_id'),
+            "correct_option_id": correct_answers.get(answer.get('question_id')),
+            "user_option_id": answer.get('option_id'),
+            "is_correct": correct_answers.get(answer.get('question_id')) == answer.get('option_id')
+        } for answer in user_answers
+    ]
+    
+    return jsonify({ "score": score_count, "total_questions": len(quiz.questions), "results": results })
 
+# Endpoint para OBTENER el ranking de un quiz
+@app.route('/api/quizzes/<string:share_code>/ranking', methods=['GET'])
+def get_quiz_ranking(share_code):
+    quiz = Quiz.query.filter_by(share_code=share_code).first_or_404()
+    ranking_data = Score.query.filter_by(quiz_id=quiz.id)\
+                              .order_by(Score.score.desc(), Score.submitted_at.asc())\
+                              .all()
+    ranking_list = [
+        {
+            'player_name': score.player_name,
+            'score': score.score,
+            'total_questions': score.total_questions,
+            'submitted_at': score.submitted_at.strftime('%d-%m-%Y %H:%M')
+        }
+        for score in ranking_data
+    ]
+    return jsonify(ranking_list)
 
+# Bloque de ejecución principal
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    
     app.run(debug=True, port=5000)
