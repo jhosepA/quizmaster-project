@@ -58,9 +58,12 @@ function DashboardPage() {
         <tbody>
           {quizzes.map((quiz) => (
             <tr key={quiz.id}>
-              <td>{quiz.title}</td>
-              <td><code className="share-code">{quiz.share_code}</code></td>
-              <td className="actions-cell">
+              <td data-label="Título">{quiz.title}</td>
+              <td data-label="Código">
+                <code className="share-code">{quiz.share_code}</code>
+              </td>
+              <td data-label="N° Preguntas">{quiz.question_count}</td>
+              <td data-label="Acciones" className="actions-cell">
                 <Link to={`/quiz/${quiz.share_code}/ranking`} className="btn-table">Ranking</Link>
                 <button onClick={() => setActiveQrCode(activeQrCode === quiz.share_code ? null : quiz.share_code)} className="btn-table qr">
                   {activeQrCode === quiz.share_code ? 'Ocultar QR' : 'Mostrar QR'}

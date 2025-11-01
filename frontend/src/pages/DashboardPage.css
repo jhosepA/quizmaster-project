@@ -5,14 +5,15 @@
   background-color: #fff;
   border-radius: 8px;
 }
-
 .dashboard-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
-
+.btn-back { text-decoration: none; color: #333; font-weight: bold; }
 .btn-create {
   padding: 10px 20px;
   font-size: 1rem;
@@ -22,65 +23,68 @@
   border-radius: 5px;
   text-decoration: none;
 }
-
-.quizzes-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.quizzes-table th,
-.quizzes-table td {
+.quizzes-table { width: 100%; border-collapse: collapse; }
+.quizzes-table th, .quizzes-table td {
   padding: 12px 15px;
   border: 1px solid #ddd;
   text-align: left;
 }
-
 .share-code {
   background-color: #e9ecef;
   padding: 4px 8px;
   border-radius: 4px;
   font-family: monospace;
 }
-
+.actions-cell { display: flex; gap: 10px; flex-wrap: wrap; }
 .btn-table {
   padding: 6px 12px;
   font-size: 0.9rem;
   color: white;
+  border: none;
+  cursor: pointer;
   background-color: #17a2b8;
   border-radius: 5px;
   text-decoration: none;
 }
+.btn-table.qr { background-color: #ffc107; color: black; }
+.btn-table.delete { background-color: #dc3545; }
 
-.actions-cell {
-  display: flex;
-  gap: 10px;
-}
-.btn-table.qr {
-  background-color: #ffc107;
-  color: black;
-}
-.qr-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-.qr-modal-content {
-  background: white;
-  padding: 2rem;
-  border-radius: 8px;
-  text-align: center;
-}
+/* ... (Estilos del Modal QR sin cambios) ... */
 
-.btn-back { text-decoration: none; color: #333; font-weight: bold; }
-.dashboard-header { flex-wrap: wrap; }
-
-.btn-table.delete {
-  background-color: #dc3545;
+/* --- AQUI EMPIEZA LA MAGIA RESPONSIVE --- */
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 1rem;
+  }
+  .quizzes-table thead {
+    display: none; /* Ocultamos la cabecera en móviles */
+  }
+  .quizzes-table, .quizzes-table tbody, .quizzes-table tr, .quizzes-table td {
+    display: block; /* Hacemos que todo se comporte como un bloque */
+    width: 100%;
+  }
+  .quizzes-table tr {
+    margin-bottom: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 1rem;
+  }
+  .quizzes-table td {
+    text-align: right;
+    position: relative;
+    border: none;
+    border-bottom: 1px solid #eee;
+    padding-left: 50%;
+    margin-bottom: 0.5rem;
+  }
+  .quizzes-table td:last-child {
+    border-bottom: none;
+  }
+  .quizzes-table td::before {
+    content: attr(data-label); /* Usamos el data-label como título */
+    position: absolute;
+    left: 15px;
+    font-weight: bold;
+    text-align: left;
+  }
 }

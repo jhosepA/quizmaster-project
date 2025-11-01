@@ -49,10 +49,10 @@ function RankingPage() {
           <tbody>
             {ranking.map((entry, index) => (
               <tr key={index}>
-                <td>{index + 1}</td>
-                <td>{entry.player_name}</td>
-                <td>{entry.score} / {entry.total_questions}</td>
-                <td>{entry.submitted_at}</td>
+                <td data-label="Posición">{index + 1}</td>
+                <td data-label="Jugador">{entry.player_name}</td>
+                <td data-label="Puntaje">{entry.score} / {entry.total_questions}</td>
+                <td data-label="Fecha">{entry.submitted_at}</td>
               </tr>
             ))}
           </tbody>

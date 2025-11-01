@@ -7,38 +7,57 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   text-align: center;
 }
-
 .ranking-table {
   width: 100%;
   margin: 2rem 0;
   border-collapse: collapse;
 }
-
-.ranking-table th,
-.ranking-table td {
+.ranking-table th, .ranking-table td {
   padding: 12px 15px;
   border: 1px solid #ddd;
 }
-
-.ranking-table thead tr {
-  background-color: #f2f2f2;
-}
-
-.ranking-table tbody tr:nth-child(even) {
-  background-color: #f8f9fa;
-}
-
-.ranking-table td:first-child {
-  font-weight: bold;
-}
-
+.ranking-table thead tr { background-color: #f2f2f2; }
+.ranking-table tbody tr:nth-child(even) { background-color: #f8f9fa; }
+.ranking-table td:first-child { font-weight: bold; }
 .home-link {
-    display: inline-block;
-    margin-top: 1rem;
-    padding: 10px 20px;
-    font-size: 1rem;
-    color: white;
-    background-color: #007bff;
-    border-radius: 5px;
-    text-decoration: none;
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 10px 20px;
+  font-size: 1rem;
+  color: white;
+  background-color: #007bff;
+  border-radius: 5px;
+  text-decoration: none;
+}
+
+/* --- ESTILOS RESPONSIVE PARA EL RANKING --- */
+@media (max-width: 768px) {
+  .ranking-container { padding: 1rem; }
+  .ranking-table thead { display: none; }
+  .ranking-table, .ranking-table tbody, .ranking-table tr, .ranking-table td {
+    display: block;
+    width: 100%;
+  }
+  .ranking-table tr {
+    margin-bottom: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 1rem;
+  }
+  .ranking-table td {
+    text-align: right;
+    position: relative;
+    border: none;
+    border-bottom: 1px solid #eee;
+    padding-left: 50%;
+    margin-bottom: 0.5rem;
+  }
+  .ranking-table td:last-child { border-bottom: none; }
+  .ranking-table td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 15px;
+    font-weight: bold;
+    text-align: left;
+  }
 }
