@@ -43,7 +43,7 @@ function HomePage() {
       <footer className="credits-footer">
         <p>🏆 Creado por:</p>
         <p>Jhosep Vargas</p>
-        <p>Daniel Cachon</p>
+        <p>Daniel Chacon</p>
         <p>Daniel De Santis</p>
         <p>Rafael Guedez</p>
         <p>Jose Cuello</p>
