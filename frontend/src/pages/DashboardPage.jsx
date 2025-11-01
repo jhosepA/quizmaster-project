@@ -13,7 +13,7 @@ function DashboardPage() {
   const handleDelete = async (shareCode) => {
     if (window.confirm('¿Estás seguro de que quieres eliminar este quiz? Esta acción es irreversible.')) {
       try {
-        await axios.delete(`http://localhost:5000/api/quizzes/${shareCode}`);
+        await axios.delete(`https://quizmaster-backend-hkey.onrender.com/api/quizzes/${shareCode}`);
         // Actualizamos la lista de quizzes para que el eliminado desaparezca
         setQuizzes(quizzes.filter(q => q.share_code !== shareCode));
       } catch (err) {
@@ -25,7 +25,7 @@ function DashboardPage() {
   useEffect(() => {
     const fetchQuizzes = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/quizzes');
+        const response = await axios.get('https://quizmaster-backend-hkey.onrender.com/api/quizzes');
         setQuizzes(response.data);
       } catch (err) {
         setError("No se pudieron cargar los quizzes.");
@@ -36,8 +36,7 @@ function DashboardPage() {
     fetchQuizzes();
   }, []);
 
-  const quizBaseUrl = `${window.location.protocol}//${window.location.hostname}:5173/quiz`;
-
+  const quizBaseUrl = `${window.location.origin}/quiz`;
   if (loading) return <div className="dashboard-container">Cargando...</div>;
   if (error) return <div className="dashboard-container error-message">{error}</div>;
 

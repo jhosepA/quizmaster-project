@@ -12,7 +12,7 @@ function RankingPage() {
   useEffect(() => {
     const fetchRanking = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/quizzes/${shareCode}/ranking`);
+        const response = await axios.get(`https://quizmaster-backend-hkey.onrender.com/api/quizzes/${shareCode}/ranking`);
         setRanking(response.data);
       } catch (err) {
         console.error("Error al obtener el ranking:", err);

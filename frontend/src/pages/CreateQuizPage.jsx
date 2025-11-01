@@ -31,7 +31,7 @@ function CreateQuizPage() {
     setIsGenerating(true);
 
     try {
-      const response = await axios.post('http://localhost:5000/api/generate-quiz-ai', {
+      const response = await axios.post('https://quizmaster-backend-hkey.onrender.com/api/generate-quiz-ai', {
         topic: aiTopic,
         num_questions: 5 // Puedes hacerlo configurable si quieres
       });
@@ -94,7 +94,7 @@ function CreateQuizPage() {
       }))
     };
     try {
-      const response = await axios.post('http://localhost:5000/api/quizzes', payload);
+      const response = await axios.post('https://quizmaster-backend-hkey.onrender.com/api/quizzes', payload);
       setSuccessMessage(`¡Quiz guardado! Código para compartir: ${response.data.share_code}`);
     } catch (err) {
       console.error("Error al crear el quiz:", err);

@@ -24,7 +24,7 @@ function QuizPage() {
   useEffect(() => {
     const fetchQuiz = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/quizzes/${shareCode}`);
+        const response = await axios.get(`https://quizmaster-backend-hkey.onrender.com/api/quizzes/${shareCode}`);
         setQuiz(response.data);
       } catch (err) {
         console.error("Error al obtener el quiz:", err);
@@ -51,7 +51,7 @@ function QuizPage() {
     }));
 
     axios.post(
-      `http://localhost:5000/api/quizzes/${shareCode}/submit`, 
+      `https://quizmaster-backend-hkey.onrender.com/api/quizzes/${shareCode}/submit`, 
       { answers: answersPayload, player_name: playerName || 'Anónimo' }
     )
     .then(response => {
