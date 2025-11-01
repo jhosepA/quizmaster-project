@@ -8,7 +8,6 @@ import os
 import json
 from dotenv import load_dotenv
 import openai
-from flask_migrate import Migrate
 
 # Inicialización y Configuración
 app = Flask(__name__)
@@ -19,7 +18,7 @@ db_uri = os.getenv('DATABASE_URL', 'postgresql://quiz_user:123@localhost:5432/qu
 app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
-migrate = Migrate(app, db)
+
 
 # --- Configuración de OpenRouter ---
 load_dotenv()
@@ -65,6 +64,10 @@ class Score(db.Model):
     submitted_at = db.Column(db.DateTime, nullable=False, default=datetime.datetime.utcnow)
     quiz_id = db.Column(db.Integer, db.ForeignKey('quizzes.id'), nullable=False)
 
+
+with app.app_context():
+    db.create_all()
+    
 # --- Rutas de la API (Endpoints) ---
 
 @app.route('/api/ping', methods=['GET'])
