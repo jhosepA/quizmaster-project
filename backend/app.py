@@ -8,6 +8,7 @@ import os
 import json
 from dotenv import load_dotenv
 import openai
+from flask_migrate import Migrate
 
 # Inicialización y Configuración
 app = Flask(__name__)
@@ -18,6 +19,7 @@ db_uri = os.getenv('DATABASE_URL', 'postgresql://quiz_user:123@localhost:5432/qu
 app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 # --- Configuración de OpenRouter ---
 load_dotenv()
@@ -267,6 +269,4 @@ def delete_quiz(share_code):
         
 # Bloque de ejecución principal
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
     app.run(debug=True, port=5000)
