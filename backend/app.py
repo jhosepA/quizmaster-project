@@ -13,7 +13,8 @@ import openai
 app = Flask(__name__)
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 CORS(app, resources={r"/api/*": {"origins": FRONTEND_URL}})
-db_uri = 'postgresql://quiz_user:123@localhost:5432/quiz_db'
+# Usamos la variable de entorno DATABASE_URL. Si no existe, usamos la de localhost.
+db_uri = os.getenv('DATABASE_URL', 'postgresql://quiz_user:123@localhost:5432/quiz_db')
 app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
